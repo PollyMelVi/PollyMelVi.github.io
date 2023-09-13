@@ -63,7 +63,7 @@
         padding: 0 12px 0 12px;
         color: #616161;
         text-align: center;
-        font-family: Inter;
+        font-family: "Inter";
         font-size: 11px;
         font-style: normal;
         font-weight: 500;
@@ -71,7 +71,7 @@
         letter-spacing: -0.22px;
       }
       input[type="range"] {
-        -webkit-appearance: none;
+        appearance: none;
       }
       input[type="range"]::-webkit-slider-thumb {
         width: 16px;
@@ -79,9 +79,72 @@
         color: #5aa6ff;
         margin-bottom: 7px;
       }
+      #menu {
+        display: flex;
+        position: fixed;
+        padding: 4px 0px;
+        flex-direction: column;
+        align-items: flex-start;
+        border-radius: 8px;
+        border: 2px solid var(--Light-gray, #e2e5e9);
+        background: #fff;
+        width: 239px;
+        height: 772px;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        overflow-x: hidden;
+      }
+
+      #menu a {
+        display: block;
+        height: 48px;
+        padding-left: 16px;
+        flex-shrink: 0;
+        align-self: stretch;
+        color: var(--Dark-gray, #495057);
+        font-family: "Open Sans", sans-serif;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        background-color: #dcf4ff;
+        text-decoration: none;
+      }
+      #menu p {
+        display: flex;
+        height: 48px;
+        padding-left: 16px;
+        flex-shrink: 0;
+        align-self: stretch;
+        color: var(--Dark-gray, #495057);
+        font-family: "Open Sans", sans-serif;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+      }
+
+      #menu a:last-child {
+        border: none;
+      }
+
+      #menu a:focus {
+        background-color: #fff;
+        color: #404040;
+      }
+
+      #menu a.active {
+        background-color: #dcf4ff;
+      }
+
+      #menu a.active:active {
+        background-color: #fff;
+      }
     </style>
   </head>
   <body class="wrapper">
+    <nav id="menu"></nav>
     <div id="map"></div>
     <div class="sliderConteiner">
       <p>Выбор года</p>
@@ -241,20 +304,86 @@
               },
             ],
           },
-        });
-        map.addLayer({
-          id: "route-width",
-          type: "line",
-          source: "route",
-          paint: {
-            "line-color": "#c93c20",
-            "line-width": 2,
-          },
-        });
-        document.querySelector('#slider').addEventListener("input", () => {
-            const year = parseInt(document.getElementById("slider").value);
-            map.setPaintProperty("route-width", "line-width", year*2);
+        }),
+          map.addLayer({
+            id: "Линия Москва-СПб",
+            type: "line",
+            source: "route",
+            layout: {
+              visibility: "visible",
+            },
+            paint: {
+              "line-color": "#c93c20",
+              "line-width": 2,
+            },
           });
+        document.querySelector("#slider").addEventListener("input", () => {
+          const year = parseInt(document.getElementById("slider").value);
+          map.setPaintProperty("Линия Москва-СПб", "line-width", year * 2);
+        });
+      });
+      map.on("idle", () => {
+        if (!map.getLayer("Линия Москва-СПб")) {
+          return;
+        }
+        const toggleableLayerIds = ["Линия Москва-СПб"];
+        const inactiveLayers = [
+          "Слой 2",
+          "Слой 3",
+          "Слой 4",
+          "Слой 5",
+          "Слой 6",
+          "Слой 7",
+          "Слой 8",
+          "Слой 9",
+          "Слой 10",
+        ];
+
+        for (const id of toggleableLayerIds) {
+          if (document.getElementById(id)) {
+            continue;
+          }
+
+          const link = document.createElement("a");
+          link.id = id;
+          link.href = "#";
+          link.textContent = id;
+          link.className = "active";
+
+          link.onclick = function (e) {
+            const clickedLayer = this.textContent;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const visibility = map.getLayoutProperty(
+              clickedLayer,
+              "visibility"
+            );
+
+            if (visibility === "visible") {
+              map.setLayoutProperty(clickedLayer, "visibility", "none");
+              this.className = "";
+            } else {
+              this.className = "active";
+              map.setLayoutProperty(clickedLayer, "visibility", "visible");
+            }
+          };
+
+          const layers = document.getElementById("menu");
+          layers.appendChild(link);
+        }
+        for (const inactiveId of inactiveLayers) {
+          if (document.getElementById(inactiveId)) {
+            continue;
+          }
+
+          const inactiveLink = document.createElement("p");
+          inactiveLink.id = inactiveId;
+          inactiveLink.textContent = inactiveId;
+
+          const layer = document.getElementById("menu");
+          layer.appendChild(inactiveLink);
+        }
       });
     </script>
   </body>
